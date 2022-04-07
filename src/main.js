@@ -13,7 +13,9 @@ import VueAxios from "vue-axios"
 import Toaster from "vue-toast-notification"
 import "vue-toast-notification/dist/theme-sugar.css"
 
-axios.defaults.timeout = 55000
 const app = createApp(App).use(router).use(VueAxios, axios).use(Toaster)
+
+//Global variables
+app.config.globalProperties.$token = ""
 
 app.mount("#app")

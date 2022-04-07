@@ -63,7 +63,14 @@
 				required
 			/>
 			<br />
-			<button type="button" class="btn btn-primary px-5" @click="checkForm">Login</button>
+			<button
+				:disabled="loading == true ? true : false"
+				type="button"
+				class="btn btn-primary px-5"
+				@click="checkForm"
+			>
+				{{ msgBtn }}
+			</button>
 		</div>
 	</div>
 </template>
@@ -79,37 +86,52 @@
 					username: "",
 					password: "",
 				},
+				token: "",
+				loading: false,
 				openstack: "",
-				errors: null,
-				message: {
-					auth: {
-						identity: {
-							methods: ["password"],
-							password: {
-								user: {
-									name: "demo",
-									domain: {
-										name: "Default",
-									},
-									password: "devstack",
-								},
-							},
-						},
-					},
-				},
+				userId: "",
+				projects: {},
 			}
 		},
+
 		methods: {
 			checkForm() {
-				//if (this.credentials.ip == "") this.$toast.error("Ip of server is required!")
-				//if (this.credentials.port == "") this.$toast.error("Port of server is required!")
+				var ipValid = this.checkIp()
+
+				if (Object.keys(this.credentials.ip).length < 4)
+					this.$toast.error("Ip of server is required!")
+				if (!ipValid) this.$toast.error("Invalid Ip!")
+				if (this.credentials.port == "") this.$toast.error("Port of server is required!")
 				if (this.credentials.username == "") this.$toast.error("Username is required!")
 				if (this.credentials.password == "") this.$toast.error("Password is required!")
-				if (this.credentials.password != "" && this.credentials.username != "") this.login()
+				if (
+					this.credentials.password != "" &&
+					this.credentials.username != "" &&
+					ipValid &&
+					Object.keys(this.credentials.ip).length == 4
+				)
+					this.login()
 			},
 
-			login() {
-				this.axios
+			checkIp() {
+				var error = false
+
+				for (let i = 0; i < Object.keys(this.credentials.ip).length; i++) {
+					if (this.credentials.ip[i] > 255 || this.credentials.ip[i] < 0) error = true
+
+					this.openstack += this.credentials.ip[i]
+					if (i <= 2) this.openstack += "."
+				}
+
+				this.openstack += ":" + this.credentials.port
+
+				return !error
+			},
+
+			async login() {
+				this.loading = true
+
+				await this.axios
 					.post(
 						"http://" +
 							this.credentials.ip[0] +
@@ -128,11 +150,11 @@
 									methods: ["password"],
 									password: {
 										user: {
-											name: this.credentials.username,
+											name: "demo", //this.credentials.username,
 											domain: {
 												name: "Default",
 											},
-											password: this.credentials.password,
+											password: "secret", //this.credentials.password,
 										},
 									},
 									scope: {
@@ -150,19 +172,73 @@
 						}
 					)
 					.then(response => {
-						this.user = response.data.token.user
-						this.user.token = response.headers["x-subject-token"]
-						this.user.scope = "project"
-						//this.getProjects()
 						this.loading = false
+						this.token = response.headers["x-subject-token"]
+						this.userId = response.data.token.user.id
+						this.getProjects()
+						this.$emit(
+							"getToken",
+							this.token,
+							this.credentials.username,
+							this.userId,
+							this.openstack
+						)
 						this.$toast.success("SignIn successful!")
-						console.log(response)
 					})
 					.catch(error => {
-						if (error.response.status == 401)
-							this.$toast.error("Failed to login! Wrong username or password")
+						if (error.response) {
+							if (error.response.status == 401)
+								this.$toast.error("Failed to login! Wrong username or password")
+						} else this.$toast.error("OpenStack server are unreachable!")
+
 						this.loading = false
 					})
+
+				this.loading = false
+			},
+
+			async getProjects() {
+				await this.axios
+					.get(
+						"http://" +
+							this.credentials.ip[0] +
+							"." +
+							this.credentials.ip[1] +
+							"." +
+							this.credentials.ip[2] +
+							"." +
+							this.credentials.ip[3] +
+							":" +
+							this.credentials.port +
+							"/identity/v3/users/" +
+							this.userId +
+							"/projects",
+						{
+							headers: { "x-auth-token": this.token },
+						}
+					)
+					.then(response => {
+						this.projects = response.data.projects
+						this.$emit("getProjects", this.projects)
+					})
+					.catch(response => {
+						var error_message = "Somethign went wrong..."
+						if (response == "Error: Request failed with status code 401") {
+							error_message = "Invalid credentials..."
+						}
+						this.$toasted.error(error_message, {
+							theme: "outline",
+							position: "top-right",
+							duration: 5000,
+						})
+						this.loadingProjects = false
+					})
+			},
+		},
+		computed: {
+			msgBtn() {
+				if (this.loading) return "Connecting to server..."
+				else return "Sign In"
 			},
 		},
 	}
