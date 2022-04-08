@@ -150,11 +150,11 @@
 									methods: ["password"],
 									password: {
 										user: {
-											name: "demo", //this.credentials.username,
+											name: this.credentials.username,
 											domain: {
 												name: "Default",
 											},
-											password: "secret", //this.credentials.password,
+											password: this.credentials.password,
 										},
 									},
 									scope: {
