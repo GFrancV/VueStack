@@ -176,13 +176,12 @@
 						this.token = response.headers["x-subject-token"]
 						this.userId = response.data.token.user.id
 						this.getProjects()
-						this.$emit(
-							"getToken",
-							this.token,
-							this.credentials.username,
-							this.userId,
-							this.openstack
-						)
+						this.$emit("getToken", {
+							token: this.toke,
+							userId: this.userId,
+							username: this.credentials.username,
+							openstack: this.openstack,
+						})
 						this.$toast.success("SignIn successful!")
 					})
 					.catch(error => {

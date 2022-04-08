@@ -39,7 +39,10 @@
 						<router-link
 							class="nav-link"
 							:class="{ active: $route.name === 'Volumes' }"
-							:to="{ name: 'Volumes' }"
+							:to="{
+								name: 'Volumes',
+								params: { openStack: openStack, currentProjectId: currentProjectId, token: token },
+							}"
 						>
 							Volumes
 						</router-link>
@@ -72,7 +75,7 @@
 									class="form-select"
 									name="project"
 									id="projectSelect"
-									v-model="currentProjectName"
+									v-model="currentProject"
 								>
 									<option v-for="project in projects" :key="project">
 										{{ project.name }}
@@ -88,8 +91,8 @@
 					</div>
 				</div>
 				<br />
-				{{ currentProjectId }}
-				{{ currentProjectName }}
+				{{ currentProject }}
+				{{ projectsTokens }}
 				<router-view />
 			</div>
 		</div>
@@ -108,12 +111,13 @@
 		name: "RootComponent",
 		data() {
 			return {
+				credentials: {},
 				username: "",
 				openStack: "",
 				token: "",
 				userId: "",
-				currentProjectId: "",
-				currentProjectName: "",
+				projectsTokens: [],
+				currentProject: "",
 				projects: {},
 			}
 		},
@@ -130,9 +134,59 @@
 				//Get all the projects
 				this.projects = projects
 
+				//Get Scoped tojens
+				for (let i = 0; i < this.projects.length; i++) {
+					this.getScopedToken(projects[i].id, projects[i].name)
+				}
+
 				//Define the default project
 				this.currentProjectId = this.projects[0].id
 				this.currentProjectName = this.projects[0].name
+			},
+
+			async getScopedToken(idProject, nameProject) {
+				await this.axios
+					.post(
+						"http://" + this.openStack + "/identity/v3/auth/tokens",
+						{
+							auth: {
+								identity: {
+									methods: ["password"],
+									password: {
+										user: {
+											name: this.username,
+											domain: {
+												name: "Default",
+											},
+											password: this.password,
+										},
+									},
+									scope: {
+										project: {
+											id: idProject,
+										},
+									},
+								},
+							},
+						},
+						{
+							headers: {
+								"Content-Type": "application/json",
+							},
+						}
+					)
+					.then(response => {
+						this.projectsTokens.push({
+							name: nameProject,
+							token: response.headers["x-subject-token"],
+						})
+					})
+					.catch(error => {
+						if (error.response) {
+							if (error.response.status == 401)
+								this.$toast.error("Failed to login! Wrong username or password")
+						} else this.$toast.error("OpenStack server are unreachable!")
+					})
 			},
 
 			selectProject() {
