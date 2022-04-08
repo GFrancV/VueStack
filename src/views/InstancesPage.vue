@@ -1,9 +1,17 @@
 <template>
-	<div class="content-dash"></div>
+	<div class="content-dash">{{ openStack }}s</div>
 </template>
 
 <script>
-	export default {}
+	export default {
+		name: "InstancePage",
+		props: {
+			openStack: {
+				type: String,
+				required: true,
+			},
+		},
+	}
 </script>
 
 <style></style>

@@ -1,15 +1,15 @@
 <template>
 	<!-- Navbar -->
-	<nav v-if="token != ''" class="navbar navbar-dark bg-dark">
+	<nav v-if="Object.keys(projects).length != 0" class="navbar navbar-dark bg-dark">
 		<div class="container-fluid">
 			<a class="navbar-brand">Navbar</a>
 			<form class="d-flex">
 				<span class="navbar-text"> OpenStack: </span>
-				<input class="form-control me-2" v-model="openStack" type="text" readonly />
+				<input class="form-control me-2" v-model="credentials.openstack" type="text" readonly />
 				<span class="navbar-text"> User: </span>
 				<input
 					class="form-control me-2"
-					v-model="username"
+					v-model="credentials.username"
 					type="text"
 					placeholder="demo"
 					readonly
@@ -30,7 +30,7 @@
 						<router-link
 							class="nav-link"
 							:class="{ active: $route.name === 'Instances' }"
-							:to="{ name: 'Instances' }"
+							:to="{ name: 'Instances', params: { openStack: credentials.openStack } }"
 						>
 							Instances
 						</router-link>
@@ -41,7 +41,11 @@
 							:class="{ active: $route.name === 'Volumes' }"
 							:to="{
 								name: 'Volumes',
-								params: { openStack: openStack, currentProjectId: currentProjectId, token: token },
+								params: {
+									openStack: credentials.openStack,
+									currentProjectId: currentProjectId,
+									token: credentials.token,
+								},
 							}"
 						>
 							Volumes
@@ -91,14 +95,14 @@
 					</div>
 				</div>
 				<br />
+				{{ credentials }}
 				{{ currentProject }}
 				{{ projectsTokens }}
 				<router-view />
 			</div>
 		</div>
 	</div>
-
-	<div v-if="token == ''" class="container">
+	<div v-if="Object.keys(projects).length == 0" class="container">
 		<sign-in @getToken="getToken" @getProjects="getProjects"></sign-in>
 	</div>
 </template>
@@ -112,10 +116,6 @@
 		data() {
 			return {
 				credentials: {},
-				username: "",
-				openStack: "",
-				token: "",
-				userId: "",
 				projectsTokens: [],
 				currentProject: "",
 				projects: {},
@@ -123,11 +123,8 @@
 		},
 
 		methods: {
-			getToken(token, username, userId, openStack) {
-				this.token = token
-				this.username = username
-				this.userId = userId
-				this.openStack = openStack
+			getToken(credentials) {
+				this.credentials = credentials
 			},
 
 			getProjects(projects) {
@@ -147,18 +144,18 @@
 			async getScopedToken(idProject, nameProject) {
 				await this.axios
 					.post(
-						"http://" + this.openStack + "/identity/v3/auth/tokens",
+						"http://" + this.credentials.openstack + "/identity/v3/auth/tokens",
 						{
 							auth: {
 								identity: {
 									methods: ["password"],
 									password: {
 										user: {
-											name: this.username,
+											name: this.credentials.username,
 											domain: {
 												name: "Default",
 											},
-											password: this.password,
+											password: this.credentials.password,
 										},
 									},
 									scope: {
@@ -189,6 +186,10 @@
 					})
 			},
 
+			getNameCurrentProject() {
+				this.currentProject = this.projectsTokens[0].name
+			},
+
 			selectProject() {
 				for (let i = 0; i < this.projects.length; i++) {
 					if (this.projects[i].name == this.currentProjectName)
@@ -196,7 +197,10 @@
 				}
 			},
 		},
-		mounted() {},
+
+		mounted() {
+			//this.getNameCurrentProject()
+		},
 	}
 </script>
 

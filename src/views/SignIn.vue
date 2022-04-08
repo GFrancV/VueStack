@@ -177,10 +177,11 @@
 						this.userId = response.data.token.user.id
 						this.getProjects()
 						this.$emit("getToken", {
-							token: this.toke,
+							token: this.token,
 							userId: this.userId,
 							username: this.credentials.username,
-							openstack: this.openstack,
+							password: this.credentials.password,
+							openStack: this.openstack,
 						})
 						this.$toast.success("SignIn successful!")
 					})
