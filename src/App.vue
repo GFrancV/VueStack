@@ -14,12 +14,6 @@
 					placeholder="demo"
 					readonly
 				/>
-				<span class="navbar-text"> Project: </span>
-				<select class="form-select" name="project" id="">
-					<option selected>demo</option>
-					<option>xd</option>
-					<option>xd1</option>
-				</select>
 				<button class="btn btn-outline-success" type="submit">LogOut</button>
 			</form>
 		</div>
@@ -33,10 +27,22 @@
 				<div class="dropdown-divider bg-white"></div>
 				<ul class="navbar-nav mr-auto">
 					<li class="nav-item active">
-						<a class="nav-link" href="#">Instances <span class="sr-only">(current)</span></a>
+						<router-link
+							class="nav-link"
+							:class="{ active: $route.name === 'Instances' }"
+							:to="{ name: 'Instances' }"
+						>
+							Instances
+						</router-link>
 					</li>
 					<li class="nav-item active">
-						<a class="nav-link" href="#">Volumes <span class="sr-only">(current)</span></a>
+						<router-link
+							class="nav-link"
+							:class="{ active: $route.name === 'Volumes' }"
+							:to="{ name: 'Volumes' }"
+						>
+							Volumes
+						</router-link>
 					</li>
 					<li class="nav-item active">
 						<a class="nav-link" href="#">Images <span class="sr-only">(current)</span></a>
@@ -50,11 +56,40 @@
 				</ul>
 			</div>
 		</div>
+
+		<!-- Dashboard -->
 		<div class="col-sm-10 content bg-light">
 			<div class="container">
-				<div v-for="project in projects" :key="project">
-					{{ project.name }}
+				<div class="row">
+					<div class="col-sm-8 align-self-end">
+						<h1>{{ $route.name }}</h1>
+					</div>
+					<div class="col-sm-4">
+						<div class="row">
+							<div class="col-sm-8">
+								<label for="projectSelect">Project: </label>
+								<select
+									class="form-select"
+									name="project"
+									id="projectSelect"
+									v-model="currentProjectName"
+								>
+									<option v-for="project in projects" :key="project">
+										{{ project.name }}
+									</option>
+								</select>
+							</div>
+							<div class="col-sm-4 align-self-end">
+								<button type="button" class="btn btn-success px-5" @click="selectProject">
+									Select
+								</button>
+							</div>
+						</div>
+					</div>
 				</div>
+				<br />
+				{{ currentProjectId }}
+				{{ currentProjectName }}
 				<router-view />
 			</div>
 		</div>
@@ -77,6 +112,8 @@
 				openStack: "",
 				token: "",
 				userId: "",
+				currentProjectId: "",
+				currentProjectName: "",
 				projects: {},
 			}
 		},
@@ -90,7 +127,19 @@
 			},
 
 			getProjects(projects) {
+				//Get all the projects
 				this.projects = projects
+
+				//Define the default project
+				this.currentProjectId = this.projects[0].id
+				this.currentProjectName = this.projects[0].name
+			},
+
+			selectProject() {
+				for (let i = 0; i < this.projects.length; i++) {
+					if (this.projects[i].name == this.currentProjectName)
+						this.currentProjectId = this.projects[i].id
+				}
 			},
 		},
 		mounted() {},
@@ -104,14 +153,3 @@
 		margin-right: 8px;
 	}
 </style>
-
-{"projects": [{"id": "2f1d51eee0794b35b03e10ada97a614a", "name": "invisible_to_admin", "domain_id":
-"default", "description": "", "enabled": true, "parent_id": "default", "is_domain": false, "tags":
-[], "options": {}, "links": {"self":
-"http://192.168.56.102/identity/v3/projects/2f1d51eee0794b35b03e10ada97a614a"}}, {"id":
-"e0bdcf5342214407b458f33d481640ae", "name": "demo", "domain_id": "default", "description": "",
-"enabled": true, "parent_id": "default", "is_domain": false, "tags": [], "options": {}, "links":
-{"self": "http://192.168.56.102/identity/v3/projects/e0bdcf5342214407b458f33d481640ae"}}], "links":
-{"next": null, "self":
-"http://192.168.56.102/identity/v3/users/56b94d6cdf1e4183a58234d6e5c5f84e/projects", "previous":
-null}}
