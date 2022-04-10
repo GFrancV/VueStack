@@ -26,9 +26,12 @@
 	</div>
 	<div class="content-dash">
 		<div class="d-flex justify-content-end">
-			<button type="button" class="btn btn-success">+ Create new volume</button>
+			<button @click="showPopForm" type="button" class="btn btn-success">
+				+ Create new volume
+			</button>
 		</div>
 		<br />
+
 		<div v-if="loading" class="row">
 			<!-- Volume -->
 			<div v-for="volume in volumes" :key="volume" class="col-sm-4">
@@ -68,10 +71,14 @@
 		</div>
 		<div v-else-if="volumes.length == 0" class="d-flex justify-content-center">No volumes yet!</div>
 	</div>
+	<add-volume v-if="popForm" @TogglePopup="TogglePopup"></add-volume>
 </template>
 
 <script>
+	import AddVolume from "../components/AddVolume.vue"
+
 	export default {
+		components: { AddVolume },
 		name: "VolumesPage",
 		props: {
 			openStack: {
@@ -86,6 +93,7 @@
 				projectsTokens: this.$projectsTokens,
 				currentProjectName: "invisible_to_admin",
 				loading: false,
+				popForm: false,
 			}
 		},
 
@@ -125,6 +133,14 @@
 
 				this.getVolumes()
 			},
+
+			showPopForm() {
+				this.popForm = true
+			},
+
+			TogglePopup(status) {
+				this.popForm = status
+			},
 		},
 		mounted() {
 			this.getVolumes()
@@ -158,6 +174,14 @@
 
 	.label-info {
 		background-color: #59d2f7;
+	}
+	.modal {
+		width: 300px;
+		padding: 30px;
+		box-sizing: border-box;
+		background-color: #fff;
+		font-size: 20px;
+		text-align: center;
 	}
 </style>
 [ { "id": "bf37a8a6-d86d-428e-a503-118fec8f76e9", "status": "available", "size": 1,
