@@ -5,7 +5,7 @@
 			<a class="navbar-brand">Navbar</a>
 			<form class="d-flex">
 				<span class="navbar-text"> OpenStack: </span>
-				<input class="form-control me-2" v-model="credentials.openstack" type="text" readonly />
+				<input class="form-control me-2" v-model="credentials.openStack" type="text" readonly />
 				<span class="navbar-text"> User: </span>
 				<input
 					class="form-control me-2"
@@ -43,8 +43,6 @@
 								name: 'Volumes',
 								params: {
 									openStack: credentials.openStack,
-									currentProjectId: currentProjectId,
-									token: credentials.token,
 								},
 							}"
 						>
@@ -67,37 +65,6 @@
 		<!-- Dashboard -->
 		<div class="col-sm-10 content bg-light">
 			<div class="container">
-				<div class="row">
-					<div class="col-sm-8 align-self-end">
-						<h1>{{ $route.name }}</h1>
-					</div>
-					<div class="col-sm-4">
-						<div class="row">
-							<div class="col-sm-8">
-								<label for="projectSelect">Project: </label>
-								<select
-									class="form-select"
-									name="project"
-									id="projectSelect"
-									v-model="currentProject"
-								>
-									<option v-for="project in projects" :key="project">
-										{{ project.name }}
-									</option>
-								</select>
-							</div>
-							<div class="col-sm-4 align-self-end">
-								<button type="button" class="btn btn-success px-5" @click="selectProject">
-									Select
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-				<br />
-				{{ credentials }}
-				{{ currentProject }}
-				{{ projectsTokens }}
 				<router-view />
 			</div>
 		</div>
@@ -116,8 +83,6 @@
 		data() {
 			return {
 				credentials: {},
-				projectsTokens: [],
-				currentProject: "",
 				projects: {},
 			}
 		},
@@ -125,6 +90,8 @@
 		methods: {
 			getToken(credentials) {
 				this.credentials = credentials
+
+				this.$ipOpenStack = credentials.openStack
 			},
 
 			getProjects(projects) {
@@ -132,19 +99,15 @@
 				this.projects = projects
 
 				//Get Scoped tojens
-				for (let i = 0; i < this.projects.length; i++) {
+				for (let i = 0; i < projects.length; i++) {
 					this.getScopedToken(projects[i].id, projects[i].name)
 				}
-
-				//Define the default project
-				this.currentProjectId = this.projects[0].id
-				this.currentProjectName = this.projects[0].name
 			},
 
 			async getScopedToken(idProject, nameProject) {
 				await this.axios
 					.post(
-						"http://" + this.credentials.openstack + "/identity/v3/auth/tokens",
+						"http://" + this.credentials.openStack + "/identity/v3/auth/tokens",
 						{
 							auth: {
 								identity: {
@@ -158,10 +121,10 @@
 											password: this.credentials.password,
 										},
 									},
-									scope: {
-										project: {
-											id: idProject,
-										},
+								},
+								scope: {
+									project: {
+										id: idProject,
 									},
 								},
 							},
@@ -173,34 +136,20 @@
 						}
 					)
 					.then(response => {
-						this.projectsTokens.push({
+						this.$projectsTokens.push({
 							name: nameProject,
 							token: response.headers["x-subject-token"],
 						})
 					})
 					.catch(error => {
 						if (error.response) {
-							if (error.response.status == 401)
-								this.$toast.error("Failed to login! Wrong username or password")
-						} else this.$toast.error("OpenStack server are unreachable!")
+							if (error.response.status == 400) this.$toast.error("Internal server error!")
+						} else this.$toast.error("Error to obtaince the scoped token!")
 					})
 			},
-
-			getNameCurrentProject() {
-				this.currentProject = this.projectsTokens[0].name
-			},
-
-			selectProject() {
-				for (let i = 0; i < this.projects.length; i++) {
-					if (this.projects[i].name == this.currentProjectName)
-						this.currentProjectId = this.projects[i].id
-				}
-			},
 		},
 
-		mounted() {
-			//this.getNameCurrentProject()
-		},
+		mounted() {},
 	}
 </script>
 
