@@ -80,7 +80,7 @@
 		</div>
 		<div v-else class="d-flex justify-content-center"><h3>Loading...</h3></div>
 	</div>
-	<add-volume v-if="popForm" @TogglePopup="TogglePopup"></add-volume>
+	<add-volume v-if="popForm" @TogglePopup="TogglePopup" :token="currentToken"></add-volume>
 	<delete-confirm v-if="confirmDelete" @TogglePopup="TogglePopup"> </delete-confirm>
 </template>
 
@@ -106,6 +106,7 @@
 				loading: false,
 				popForm: false,
 				confirmDelete: false,
+				currentToken: "",
 				volumeToDelete: {},
 			}
 		},
@@ -119,18 +120,18 @@
 						token = this.$projectsTokens[i].token
 				}
 
-				return token
+				this.currentToken = token
 			},
 
 			async getVolumes() {
 				this.loading = true
 
-				var token = this.getCurrentToken()
+				this.getCurrentToken()
 
 				await this.axios
 					.get("http://" + this.openStack + "/volume/v3/volumes/detail", {
 						headers: {
-							"x-auth-token": token,
+							"x-auth-token": this.currentToken,
 						},
 					})
 					.then(response => {
@@ -202,12 +203,12 @@
 			async deleteVolume() {
 				this.$toast.info("Deleting the volume...")
 
-				var token = this.getCurrentToken()
+				this.getCurrentToken()
 
 				await this.axios
 					.delete("http://" + this.openStack + "/volume/v3/volumes/" + this.volumeToDelete.id, {
 						headers: {
-							"x-auth-token": token,
+							"x-auth-token": this.currentToken,
 						},
 					})
 					.then(response => {

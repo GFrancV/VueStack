@@ -5,8 +5,7 @@
 		<input v-model="nameVolume" class="form-control" type="text" id="volumeName" required />
 		<label class="form-label" for="imageVolume">Bootable image</label>
 		<select v-model="imageVolume" name="imageVolume" id="imageVolume" class="form-select">
-			<option value="">Image 1</option>
-			<option value="">Image 2</option>
+			<option v-for="image in images" :key="image">{{ image.name }}</option>
 		</select>
 		<label class="form-label" for="volumeName">Size (GiB)</label>
 		<input v-model="sizeVolume" class="form-control" type="number" id="volumeName" required />
@@ -30,18 +29,42 @@
 
 	export default {
 		components: { PopForm },
+		props: {
+			token: {
+				type: String,
+				required: true,
+			},
+		},
+
 		data() {
 			return {
 				nameVolume: "",
 				imageVolume: "--- Select Volume ---",
+				imageId: "",
 				sizeVolume: 0,
+				images: [],
 				loading: false,
 			}
 		},
 
 		methods: {
+			async getImages() {
+				await this.axios
+					.get("http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2/images", {
+						headers: {
+							"X-Auth-Token": this.token,
+							"Content-Type": "application/json",
+						},
+					})
+					.then(response => {
+						this.images = response.data.images
+					})
+			},
+
 			save() {
 				if (this.checkForm()) return
+
+				this.getImageId()
 
 				this.sendData()
 			},
@@ -65,6 +88,15 @@
 				return error
 			},
 
+			getImageId() {
+				var idImage = ""
+
+				for (let i = 0; i < this.images.length; i++)
+					if (this.images[i].name == this.imageVolume) idImage = this.images[i].id
+
+				return idImage
+			},
+
 			sendData() {
 				this.loading = true
 
@@ -73,15 +105,15 @@
 						"http://" + this.$projectsTokens[0].ipOpenStack + "/volume/v3/volumes",
 						{
 							volume: {
-								size: 10,
+								size: this.sizeVolume,
 								availability_zone: null,
 								source_volid: null,
 								description: null,
 								multiattach: false,
 								snapshot_id: null,
 								backup_id: null,
-								name: null,
-								imageRef: null,
+								name: this.nameVolume,
+								imageRef: this.getImageId(),
 								volume_type: null,
 								metadata: {},
 								consistencygroup_id: null,
@@ -95,14 +127,15 @@
 						},
 						{
 							headers: {
-								"X-Auth-Token":
-									"gAAAAABiU_DoRbD0lYJjLtcF5WyFPDT-0YNLvcmEkNCFKBQ_h9KXwKsekIZBkBwDOPPxE-15cW169mFVbVGYTl6FqMUnmdlctjLq1AWpWlgIB3w9j1eQNqxCecIkhxj7rJFB8OlG9yEEOKTN-H58TpdEIu2C8UlOV_sf0lyaoP5HVjPpdgDGzy8",
+								"X-Auth-Token": this.token,
 								"Content-Type": "application/json",
 							},
 						}
 					)
 					.then(response => {
-						this.$toast.success(response + " Volume created successfully!")
+						this.$toast.success(
+							"Volume " + JSON.stringify(response.data.volume.name) + " created successfully!"
+						)
 						this.$emit("TogglePopup", false, "Confirm")
 						this.loading = false
 					})
@@ -117,6 +150,10 @@
 			cancel() {
 				this.$emit("TogglePopup", false, "Cancel")
 			},
+		},
+
+		mounted() {
+			this.getImages()
 		},
 
 		computed: {
