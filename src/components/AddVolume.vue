@@ -12,7 +12,14 @@
 		<input v-model="sizeVolume" class="form-control" type="number" id="volumeName" required />
 		<br />
 		<div class="d-grid gap-2 d-md-flex justify-content-md-end">
-			<button type="button" class="btn btn-success btn-sm" @click="save">Save</button>
+			<button
+				:disabled="loading == true ? true : false"
+				type="button"
+				class="btn btn-success btn-sm"
+				@click="save"
+			>
+				{{ msgBtn }}
+			</button>
 			<button type="button" class="btn btn-secondary btn-sm" @click="cancel">Cancel</button>
 		</div>
 	</pop-form>
@@ -28,6 +35,7 @@
 				nameVolume: "",
 				imageVolume: "--- Select Volume ---",
 				sizeVolume: 0,
+				loading: false,
 			}
 		},
 
@@ -35,7 +43,7 @@
 			save() {
 				if (this.checkForm()) return
 
-				console.log("llegue")
+				this.sendData()
 			},
 
 			checkForm() {
@@ -57,8 +65,64 @@
 				return error
 			},
 
+			sendData() {
+				this.loading = true
+
+				this.axios
+					.post(
+						"http://" + this.$projectsTokens[0].ipOpenStack + "/volume/v3/volumes",
+						{
+							volume: {
+								size: 10,
+								availability_zone: null,
+								source_volid: null,
+								description: null,
+								multiattach: false,
+								snapshot_id: null,
+								backup_id: null,
+								name: null,
+								imageRef: null,
+								volume_type: null,
+								metadata: {},
+								consistencygroup_id: null,
+							},
+							"OS-SCH-HNT:scheduler_hints": {
+								same_host: [
+									"a0cf03a5-d921-4877-bb5c-86d26cf818e1",
+									"8c19174f-4220-44f0-824a-cd1eeef10287",
+								],
+							},
+						},
+						{
+							headers: {
+								"X-Auth-Token":
+									"gAAAAABiU_DoRbD0lYJjLtcF5WyFPDT-0YNLvcmEkNCFKBQ_h9KXwKsekIZBkBwDOPPxE-15cW169mFVbVGYTl6FqMUnmdlctjLq1AWpWlgIB3w9j1eQNqxCecIkhxj7rJFB8OlG9yEEOKTN-H58TpdEIu2C8UlOV_sf0lyaoP5HVjPpdgDGzy8",
+								"Content-Type": "application/json",
+							},
+						}
+					)
+					.then(response => {
+						this.$toast.success(response + " Volume created successfully!")
+						this.$emit("TogglePopup", false, "Confirm")
+						this.loading = false
+					})
+					.catch(error => {
+						if (error.response) {
+							if (error.response.status == 413) this.$toast.error("Request Entity Too Large!")
+						}
+						this.loading = false
+					})
+			},
+
 			cancel() {
-				this.$emit("TogglePopup", false)
+				this.$emit("TogglePopup", false, "Cancel")
+			},
+		},
+
+		computed: {
+			msgBtn() {
+				if (this.loading) return "Saving..."
+				else return "Save"
 			},
 		},
 	}

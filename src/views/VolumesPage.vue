@@ -24,6 +24,7 @@
 			</div>
 		</div>
 	</div>
+	<br />
 	<div class="content-dash">
 		<div class="d-flex justify-content-end">
 			<button @click="showPopForm" type="button" class="btn btn-success">
@@ -34,24 +35,27 @@
 
 		<div v-if="loading" class="row">
 			<!-- Volume -->
-			<div v-for="volume in volumes" :key="volume" class="col-sm-4">
+			<div v-if="volumes.lenght == 0"><h3>No volumes yet!</h3></div>
+			<div v-for="volume in volumes" :key="volume" class="col-sm-4 volume-card-colection">
 				<div class="volume-card">
 					<div class="d-flex justify-content-center">
 						<img src="../assets/images/volumes.png" alt="volumes" width="140" />
 					</div>
 					<br />
-
 					<span class="fw-bold">Name: </span>{{ volume.name }}
 					<br />
 					<span class="fw-bold">Bootable: </span> <span v-if="volume.bootable"> Yes</span>
 					<span v-else>No</span>
 					<br />
 					<span class="fw-bold">Size: </span>{{ volume.size }} GB
+					<span v-if="volume.volume_image_metadata">
+						<br />
+						<span class="fw-bold">Imagem bootavel: </span
+						>{{ volume.volume_image_metadata.image_name }}
+					</span>
 					<br />
-					<span class="fw-bold">Imagem bootavel: </span
-					>{{ volume.volume_image_metadata.image_name }}
-					<br />
-					<span class="fw-bold">Created at: </span>{{ volume.created_at }}
+					<span class="fw-bold">Created at: </span>
+					{{ getDate(volume.created_at) }}
 					<br />
 					<span class="fw-bold">Status: </span>
 					<span v-if="volume.status == 'available'" class="label label-success">
@@ -60,25 +64,32 @@
 					<span v-else-if="volume.status == 'in-use'" class="label label-info">{{
 						volume.status
 					}}</span>
+					<span v-else-if="volume.status == 'creating'" class="label label-warning">{{
+						volume.status
+					}}</span>
 					<span v-else class="label label-danger"> {{ volume.status }} </span>
 					<br />
 					<br />
 					<div class="d-flex justify-content-center">
-						<button type="button" class="btn btn-danger btn-sm">Delete</button>
+						<button @click="popDelete(volume)" type="button" class="btn btn-danger btn-sm">
+							Delete
+						</button>
 					</div>
 				</div>
 			</div>
 		</div>
-		<div v-else-if="volumes.length == 0" class="d-flex justify-content-center">No volumes yet!</div>
+		<div v-else class="d-flex justify-content-center"><h3>Loading...</h3></div>
 	</div>
 	<add-volume v-if="popForm" @TogglePopup="TogglePopup"></add-volume>
+	<delete-confirm v-if="confirmDelete" @TogglePopup="TogglePopup"> </delete-confirm>
 </template>
 
 <script>
 	import AddVolume from "../components/AddVolume.vue"
+	import DeleteConfirm from "../components/DeleteConfirm.vue"
 
 	export default {
-		components: { AddVolume },
+		components: { AddVolume, DeleteConfirm },
 		name: "VolumesPage",
 		props: {
 			openStack: {
@@ -94,19 +105,27 @@
 				currentProjectName: "invisible_to_admin",
 				loading: false,
 				popForm: false,
+				confirmDelete: false,
+				volumeToDelete: {},
 			}
 		},
 
 		methods: {
-			async getVolumes() {
-				this.loading = true
-
+			getCurrentToken() {
 				var token = ""
 
 				for (let i = 0; i < this.$projectsTokens.length; i++) {
 					if (this.currentProjectName == this.$projectsTokens[i].name)
 						token = this.$projectsTokens[i].token
 				}
+
+				return token
+			},
+
+			async getVolumes() {
+				this.loading = true
+
+				var token = this.getCurrentToken()
 
 				await this.axios
 					.get("http://" + this.openStack + "/volume/v3/volumes/detail", {
@@ -121,6 +140,22 @@
 					.catch(error => {
 						console.log(error)
 					})
+			},
+
+			getDate(volume) {
+				var date = new Date(volume)
+				var formatData =
+					date.getDay() +
+					"-" +
+					date.getUTCMonth() +
+					"-" +
+					date.getFullYear() +
+					" at " +
+					date.getUTCHours() +
+					":" +
+					(date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes())
+
+				return formatData
 			},
 
 			selectProject() {
@@ -138,8 +173,51 @@
 				this.popForm = true
 			},
 
-			TogglePopup(status) {
+			TogglePopup(status, type) {
+				this.confirmDelete = status
 				this.popForm = status
+
+				if (type == "Confirm") {
+					this.getVolumes()
+					setTimeout(() => {
+						this.getVolumes()
+					}, 5000)
+				}
+
+				if (type == "Delete") {
+					this.deleteVolume()
+					setTimeout(() => {
+						this.getVolumes()
+					}, 5000)
+				}
+
+				if (type == "Cancel") this.volumeToDelete = {}
+			},
+
+			popDelete(volume) {
+				this.volumeToDelete = volume
+				this.confirmDelete = true
+			},
+
+			async deleteVolume() {
+				this.$toast.info("Deleting the volume...")
+
+				var token = this.getCurrentToken()
+
+				await this.axios
+					.delete("http://" + this.openStack + "/volume/v3/volumes/" + this.volumeToDelete.id, {
+						headers: {
+							"x-auth-token": token,
+						},
+					})
+					.then(response => {
+						if (response) this.$toast.success("volume erased successfully!")
+					})
+					.catch(error => {
+						if (!error.response) this.$toast.error("Unexpected error!")
+					})
+
+				this.getVolumes()
 			},
 		},
 		mounted() {
@@ -150,31 +228,17 @@
 </script>
 
 <style>
+	.volume-card-colection {
+		display: flex;
+	}
 	.volume-card {
 		border: 1px solid rgb(181, 181, 181);
 		border-radius: 14px;
 		padding: 10px;
 		margin: 12px 0px;
+		width: 500px;
 	}
 
-	.label {
-		border: 1px;
-		border-radius: 8px;
-		padding: 5px;
-		color: white;
-	}
-
-	.label-success {
-		background-color: #4bb543;
-	}
-
-	.label-danger {
-		background-color: #f32013;
-	}
-
-	.label-info {
-		background-color: #59d2f7;
-	}
 	.modal {
 		width: 300px;
 		padding: 30px;
@@ -184,27 +248,3 @@
 		text-align: center;
 	}
 </style>
-[ { "id": "bf37a8a6-d86d-428e-a503-118fec8f76e9", "status": "available", "size": 1,
-"availability_zone": "nova", "created_at": "2022-04-08T14:09:55.000000", "updated_at":
-"2022-04-08T14:09:59.000000", "name": "v2", "description": "", "volume_type": "lvmdriver-1",
-"snapshot_id": null, "source_volid": null, "metadata": {}, "links": [ { "rel": "self", "href":
-"http://192.168.56.102/volume/v3/volumes/bf37a8a6-d86d-428e-a503-118fec8f76e9" }, { "rel":
-"bookmark", "href": "http://192.168.56.102/volume/volumes/bf37a8a6-d86d-428e-a503-118fec8f76e9" } ],
-"user_id": "56b94d6cdf1e4183a58234d6e5c5f84e", "bootable": "true", "encrypted": false,
-"replication_status": null, "consistencygroup_id": null, "multiattach": false, "attachments": [],
-"os-vol-tenant-attr:tenant_id": "2f1d51eee0794b35b03e10ada97a614a", "volume_image_metadata": {
-"image_id": "a264b1ad-3037-4bf2-9459-04d71295b8ca", "image_name": "cirros 0.4.0", "checksum":
-"443b7623e27ecf03dc9e01ee93f67afe", "container_format": "bare", "disk_format": "qcow2", "min_disk":
-"0", "min_ram": "0", "size": "12716032" } }, { "id": "ff13181d-51e2-4212-b714-9a0e4314e920",
-"status": "available", "size": 1, "availability_zone": "nova", "created_at":
-"2022-04-08T14:02:27.000000", "updated_at": "2022-04-08T14:02:40.000000", "name": "v1",
-"description": "", "volume_type": "lvmdriver-1", "snapshot_id": null, "source_volid": null,
-"metadata": {}, "links": [ { "rel": "self", "href":
-"http://192.168.56.102/volume/v3/volumes/ff13181d-51e2-4212-b714-9a0e4314e920" }, { "rel":
-"bookmark", "href": "http://192.168.56.102/volume/volumes/ff13181d-51e2-4212-b714-9a0e4314e920" } ],
-"user_id": "56b94d6cdf1e4183a58234d6e5c5f84e", "bootable": "true", "encrypted": false,
-"replication_status": null, "consistencygroup_id": null, "multiattach": false, "attachments": [],
-"os-vol-tenant-attr:tenant_id": "2f1d51eee0794b35b03e10ada97a614a", "volume_image_metadata": {
-"signature_verified": "False", "image_id": "a264b1ad-3037-4bf2-9459-04d71295b8ca", "image_name":
-"cirros 0.4.0", "checksum": "443b7623e27ecf03dc9e01ee93f67afe", "container_format": "bare",
-"disk_format": "qcow2", "min_disk": "0", "min_ram": "0", "size": "12716032" } } ]

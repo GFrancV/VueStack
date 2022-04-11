@@ -98,6 +98,8 @@
 				//Get all the projects
 				this.projects = projects
 
+				this.$projectsTokens.push({ ipOpenStack: this.credentials.openStack })
+
 				//Get Scoped tojens
 				for (let i = 0; i < projects.length; i++) {
 					this.getScopedToken(projects[i].id, projects[i].name)

@@ -19,3 +19,26 @@
 	padding: 20px;
 	background-color: white;
 }
+
+.label {
+	border: 1px;
+	border-radius: 8px;
+	padding: 5px;
+	color: white;
+}
+
+.label-success {
+	background-color: #4bb543;
+}
+
+.label-danger {
+	background-color: #f32013;
+}
+
+.label-info {
+	background-color: #59d2f7;
+}
+
+.label-warning {
+	background-color: #eed202;
+}

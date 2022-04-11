@@ -16,7 +16,7 @@ import "vue-toast-notification/dist/theme-sugar.css"
 const app = createApp(App).use(router).use(VueAxios, axios).use(Toaster)
 
 //Global variables
-app.config.globalProperties.$ipOpenStack = ""
+app.config.globalProperties.$ipOpenStack = []
 app.config.globalProperties.$projectsTokens = []
 app.config.globalProperties.$currentProjectName = "demo"
 app.config.globalProperties.$currentProjectId = ""
