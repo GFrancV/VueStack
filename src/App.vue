@@ -99,11 +99,15 @@
 				this.projects = projects
 
 				this.$projectsTokens.push({ ipOpenStack: this.credentials.openStack })
+				this.$projectsTokens.push({ currentProject: "invisible_to_admin" })
+				var projectsNames = []
 
 				//Get Scoped tojens
 				for (let i = 0; i < projects.length; i++) {
 					this.getScopedToken(projects[i].id, projects[i].name)
+					projectsNames.push(projects[i].name)
 				}
+				this.$projectsTokens.push(projectsNames)
 			},
 
 			async getScopedToken(idProject, nameProject) {

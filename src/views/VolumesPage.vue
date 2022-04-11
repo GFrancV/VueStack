@@ -13,8 +13,8 @@
 						id="projectSelect"
 						v-model="currentProjectName"
 					>
-						<option v-for="project in projectsTokens" :key="project">
-							{{ project.name }}
+						<option v-for="project in projectsTokens[2]" :key="project">
+							{{ project }}
 						</option>
 					</select>
 				</div>
@@ -112,6 +112,31 @@
 		},
 
 		methods: {
+			selectProject() {
+				for (let i = 0; i < this.$projectsTokens.length; i++) {
+					if (this.$projectsTokens[i].name == this.currentProjectName)
+						this.$projectsTokens[1].currentProject = this.currentProjectName
+				}
+
+				this.getVolumes()
+			},
+
+			getDate(volume) {
+				var date = new Date(volume)
+				var formatData =
+					date.getDay() +
+					"-" +
+					date.getUTCMonth() +
+					"-" +
+					date.getFullYear() +
+					" at " +
+					date.getUTCHours() +
+					":" +
+					(date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes())
+
+				return formatData
+			},
+
 			getCurrentToken() {
 				var token = ""
 
@@ -141,33 +166,6 @@
 					.catch(error => {
 						console.log(error)
 					})
-			},
-
-			getDate(volume) {
-				var date = new Date(volume)
-				var formatData =
-					date.getDay() +
-					"-" +
-					date.getUTCMonth() +
-					"-" +
-					date.getFullYear() +
-					" at " +
-					date.getUTCHours() +
-					":" +
-					(date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes())
-
-				return formatData
-			},
-
-			selectProject() {
-				for (let i = 0; i < this.$projectsTokens.length; i++) {
-					if (this.$projectsTokens[i].name == this.currentProjectName) {
-						this.$currentProjectName = this.projectsTokens[i].name
-						this.$currentProjectId = this.projectsTokens[i].id
-					}
-				}
-
-				this.getVolumes()
 			},
 
 			showPopForm() {
@@ -222,7 +220,7 @@
 			},
 		},
 		mounted() {
-			this.getVolumes()
+			this.selectProject()
 		},
 		computed: {},
 	}
