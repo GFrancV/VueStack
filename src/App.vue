@@ -50,7 +50,15 @@
 						</router-link>
 					</li>
 					<li class="nav-item active">
-						<a class="nav-link" href="#">Images <span class="sr-only">(current)</span></a>
+						<router-link
+							class="nav-link"
+							:class="{ active: $route.name === 'Images' }"
+							:to="{
+								name: 'Images',
+							}"
+						>
+							Images
+						</router-link>
 					</li>
 					<li class="nav-item active">
 						<a class="nav-link" href="#">Flavors <span class="sr-only">(current)</span></a>

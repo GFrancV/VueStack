@@ -25,17 +25,25 @@
 		</div>
 	</div>
 	<br />
+
 	<div class="content-dash">
-		<div class="d-flex justify-content-end">
-			<button @click="showPopForm" type="button" class="btn btn-success">
-				+ Create new volume
-			</button>
+		<div class="d-flex bd-highlight">
+			<div class="p-2 w-100 bd-highlight align-self-center">
+				<h3>{{ volumes.length }}/10 volumes</h3>
+			</div>
+			<div class="p-2 flex-shrink-1 bd-highlight">
+				<button @click="showPopForm" type="button" class="btn btn-success">
+					+ Create new volume
+				</button>
+			</div>
 		</div>
 		<br />
 
 		<div v-if="loading" class="row">
 			<!-- Volume -->
-			<div v-if="volumes.lenght == 0"><h3>No volumes yet!</h3></div>
+			<div v-if="volumes.length == 0" class="d-flex justify-content-center">
+				<h3>No volumes yet!</h3>
+			</div>
 			<div v-for="volume in volumes" :key="volume" class="col-sm-4 volume-card-colection">
 				<div class="volume-card">
 					<div class="d-flex justify-content-center">
@@ -78,7 +86,7 @@
 				</div>
 			</div>
 		</div>
-		<div v-else class="d-flex justify-content-center"><h3>Loading...</h3></div>
+		<div v-else-if="loaing" class="d-flex justify-content-center"><h3>Loading...</h3></div>
 	</div>
 	<add-volume v-if="popForm" @TogglePopup="TogglePopup" :token="currentToken"></add-volume>
 	<delete-confirm v-if="confirmDelete" @TogglePopup="TogglePopup"> </delete-confirm>

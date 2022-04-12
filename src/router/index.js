@@ -3,6 +3,7 @@ import DashboarMain from "../views/DashboardMain.vue"
 import SignIn from "../views/SignIn.vue"
 import Instances from "../views/InstancesPage.vue"
 import Volumes from "../views/VolumesPage.vue"
+import Images from "../views/ImagesPage.vue"
 
 const routes = [
 	{
@@ -31,6 +32,11 @@ const routes = [
 		name: "Volumes",
 		component: Volumes,
 		props: true,
+	},
+	{
+		path: "/images",
+		name: "Images",
+		component: Images,
 	},
 ]
 
