@@ -64,8 +64,6 @@
 			save() {
 				if (this.checkForm()) return
 
-				this.getImageId()
-
 				this.sendData()
 			},
 

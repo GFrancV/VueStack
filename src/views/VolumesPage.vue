@@ -40,10 +40,13 @@
 		<br />
 
 		<div v-if="loading" class="row">
+			<h3>Loading...</h3>
+		</div>
+		<div v-else-if="volumes.length == 0" class="d-flex justify-content-center">
+			<h3>No volumes yet!</h3>
+		</div>
+		<div v-else class="row">
 			<!-- Volume -->
-			<div v-if="volumes.length == 0" class="d-flex justify-content-center">
-				<h3>No volumes yet!</h3>
-			</div>
 			<div v-for="volume in volumes" :key="volume" class="col-sm-4 volume-card-colection">
 				<div class="volume-card">
 					<div class="d-flex justify-content-center">
@@ -86,7 +89,6 @@
 				</div>
 			</div>
 		</div>
-		<div v-else-if="loaing" class="d-flex justify-content-center"><h3>Loading...</h3></div>
 	</div>
 	<add-volume v-if="popForm" @TogglePopup="TogglePopup" :token="currentToken"></add-volume>
 	<delete-confirm v-if="confirmDelete" @TogglePopup="TogglePopup"> </delete-confirm>
@@ -169,10 +171,11 @@
 					})
 					.then(response => {
 						this.volumes = response.data.volumes
-						this.loadingVolumes = false
+						this.loading = false
 					})
 					.catch(error => {
 						console.log(error)
+						this.loading = false
 					})
 			},
 

@@ -61,7 +61,15 @@
 						</router-link>
 					</li>
 					<li class="nav-item active">
-						<a class="nav-link" href="#">Flavors <span class="sr-only">(current)</span></a>
+						<router-link
+							class="nav-link"
+							:class="{ active: $route.name === 'Network' }"
+							:to="{
+								name: 'Network',
+							}"
+						>
+							Netwok
+						</router-link>
 					</li>
 					<li class="nav-item active">
 						<a class="nav-link" href="#">Containers <span class="sr-only">(current)</span></a>

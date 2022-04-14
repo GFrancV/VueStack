@@ -25,77 +25,14 @@
 		</div>
 	</div>
 	<br />
-	<div class="content-dash">
-		<div class="d-flex bd-highlight">
-			<div class="p-2 w-100 bd-highlight align-self-center">
-				<h3>{{ instances.length }}/10 instances</h3>
-			</div>
-			<div class="p-2 flex-shrink-1 bd-highlight">
-				<button @click="showPopForm" type="button" class="btn btn-success">
-					+ Create new instance
-				</button>
-			</div>
-		</div>
-		<br />
-
-		<div v-if="loading" class="row">
-			<h3>Loading...</h3>
-		</div>
-		<div v-else-if="instances.length == 0" class="d-flex justify-content-center">
-			<h3>No instances yet!</h3>
-		</div>
-		<div v-else class="row">
-			<!-- Instance -->
-			<div v-for="instance in instances" :key="instance" class="col-sm-4 volume-card-colection">
-				<div class="volume-card">
-					<div class="d-flex justify-content-center">
-						<img src="../assets/images/instances.png" alt="instances" width="140" />
-					</div>
-					<br />
-					<span class="fw-bold">Name: </span>{{ instance.name }}
-					<br />
-					<span class="fw-bold">Created at: </span>{{ getDate(instance.created) }}
-					<br />
-					<span class="fw-bold">Addresses: </span>
-					<span v-if="instance.length == 0">{{ instance.addresses }}</span>
-					<span v-else>----</span>
-					<br />
-					<span class="fw-bold">Status: </span>
-					<span v-if="instance.status == 'ACTIVE'" class="label label-success"> Active</span>
-					<span v-else-if="instance.status == 'in-use'" class="label label-info">{{
-						instance.status
-					}}</span>
-					<span v-else-if="instance.status == 'BUILD'" class="label label-warning">Building</span>
-					<span v-else class="label label-danger"> {{ instance.status }} </span>
-
-					<br />
-					<br />
-					<div class="d-flex justify-content-center">
-						<button @click="popDelete(volume)" type="button" class="btn btn-danger btn-sm">
-							Delete
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<add-instance
-		v-if="popForm"
-		@TogglePopup="TogglePopup"
-		:token="currentToken"
-		:project="currentProjectName"
-	></add-instance>
+	<div class="content-dash"></div>
 </template>
 
 <script>
-	import AddInstance from "../components/AddInstance.vue"
-
 	export default {
-		components: { AddInstance },
-		name: "InstancePage",
 		data() {
 			return {
-				instances: [],
+				volumes: [],
 				projectsTokens: this.$projectsTokens,
 				currentProjectName: "invisible_to_admin",
 				loading: false,
@@ -105,7 +42,6 @@
 				volumeToDelete: {},
 			}
 		},
-
 		methods: {
 			selectProject() {
 				for (let i = 0; i < this.$projectsTokens.length; i++) {
@@ -113,11 +49,11 @@
 						this.$projectsTokens[1].currentProject = this.currentProjectName
 				}
 
-				this.getInstances()
+				this.getVolumes()
 			},
 
-			getDate(instance) {
-				var date = new Date(instance)
+			getDate(volume) {
+				var date = new Date(volume)
 				var formatData =
 					date.getDay() +
 					"-" +
@@ -143,24 +79,23 @@
 				this.currentToken = token
 			},
 
-			async getInstances() {
+			async getVolumes() {
 				this.loading = true
 
 				this.getCurrentToken()
 
 				await this.axios
-					.get("http://" + this.projectsTokens[0].ipOpenStack + "/compute/v2.1/servers/detail", {
+					.get("http://" + this.openStack + "/volume/v3/volumes/detail", {
 						headers: {
 							"x-auth-token": this.currentToken,
 						},
 					})
 					.then(response => {
-						this.instances = response.data.servers
-						this.loading = false
+						this.volumes = response.data.volumes
+						this.loadingVolumes = false
 					})
 					.catch(error => {
 						console.log(error)
-						this.loading = false
 					})
 			},
 
