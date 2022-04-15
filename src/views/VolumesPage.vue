@@ -75,6 +75,9 @@
 					<span v-else-if="volume.status == 'in-use'" class="label label-info">{{
 						volume.status
 					}}</span>
+					<span v-else-if="volume.status == 'reserved'" class="label label-info">{{
+						volume.status
+					}}</span>
 					<span v-else-if="volume.status == 'creating'" class="label label-warning">{{
 						volume.status
 					}}</span>

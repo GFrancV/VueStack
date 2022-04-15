@@ -26,7 +26,7 @@
 			rows="3"
 		></textarea>
 		<br />
-		<div class="row">
+		<div v-if="!volumeInInstance" class="row">
 			<div class="col-sm-7">
 				<label class="form-label" for="imageInstance">Image</label>
 				<select v-model="imageInstance" name="imageInstance" id="imageInstance" class="form-select">
@@ -45,9 +45,21 @@
 				</select>
 			</div>
 		</div>
+		<div v-else>
+			<label class="form-label" for="voumeInstance">Volumes</label>
+			<select v-model="voumeInstance" class="form-select" name="voumeInstance" id="voumeInstance">
+				<option v-for="volume in volumes" :key="volume">{{ volume.name }}</option>
+			</select>
+		</div>
 		<div class="form-check">
-			<input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1" />
-			<label class="form-check-label" for="inlineCheckbox1">For the volume</label>
+			<input
+				v-model="volumeInInstance"
+				class="form-check-input"
+				type="checkbox"
+				id="volumeInInstance"
+				value="true"
+			/>
+			<label class="form-check-label" for="volumeInInstance">Use a created volume</label>
 		</div>
 		<br />
 		<label class="form-label" for="flavorInstance">Network</label>
@@ -98,6 +110,8 @@
 				descInstance: "",
 				imageInstance: "--- Select Image ---",
 				flavorInstance: "--- Select Flavor ---",
+				voumeInstance: "--- Select Volume ---",
+				volumeInInstance: false,
 				networkInstance: [],
 				images: [],
 				flavors: [],
@@ -113,7 +127,6 @@
 					.get("http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2/images", {
 						headers: {
 							"X-Auth-Token": this.token,
-							"Content-Type": "application/json",
 						},
 					})
 					.then(response => {
@@ -126,7 +139,6 @@
 					.get("http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2.1/flavors", {
 						headers: {
 							"X-Auth-Token": this.token,
-							"Content-Type": "application/json",
 						},
 					})
 					.then(response => {
@@ -134,12 +146,36 @@
 					})
 			},
 
+			async getVolumes() {
+				var allVolumes = []
+				var availableVolumes = []
+
+				await this.axios
+					.get("http://" + this.$projectsTokens[0].ipOpenStack + "/volume/v3/volumes/detail", {
+						headers: {
+							"x-auth-token": this.token,
+						},
+					})
+					.then(response => {
+						allVolumes = response.data.volumes
+					})
+
+				for (let i = 0; i < allVolumes.length; i++) {
+					if (allVolumes[i].status != "reserved" && allVolumes[i].bootable == "true") {
+						availableVolumes.push(allVolumes[i])
+					}
+				}
+
+				console.log(allVolumes)
+
+				this.volumes = availableVolumes
+			},
+
 			async getNetworks() {
 				await this.axios
 					.get("http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2.1/os-networks", {
 						headers: {
 							"X-Auth-Token": this.token,
-							"Content-Type": "application/json",
 						},
 					})
 					.then(response => {
@@ -234,9 +270,8 @@
 						}
 					)
 					.then(response => {
-						this.$toast.success(
-							"Instance " + JSON.stringify(response.data.volume.name) + " created successfully!"
-						)
+						if (response.status == 202) this.$toast.success("Instance created successfully!")
+
 						this.$emit("TogglePopup", false, "Confirm")
 						this.loading = false
 					})
@@ -256,6 +291,7 @@
 		mounted() {
 			this.getImages()
 			this.getFlavors()
+			this.getVolumes()
 			this.getNetworks()
 		},
 

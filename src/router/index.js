@@ -26,7 +26,6 @@ const routes = [
 		path: "/instances",
 		name: "Instances",
 		component: Instances,
-		props: true,
 	},
 	{
 		path: "/volumes",

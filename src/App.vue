@@ -30,7 +30,7 @@
 						<router-link
 							class="nav-link"
 							:class="{ active: $route.name === 'Instances' }"
-							:to="{ name: 'Instances', params: { openStack: credentials.openStack } }"
+							:to="{ name: 'Instances' }"
 						>
 							Instances
 						</router-link>

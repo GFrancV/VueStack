@@ -187,8 +187,10 @@
 					})
 					.catch(error => {
 						if (error.response) {
-							if (error.response.status == 401)
+							if (error.response.status == 401) {
 								this.$toast.error("Failed to login! Wrong username or password")
+								this.openstack = ""
+							}
 						} else this.$toast.error("OpenStack server are unreachable!")
 
 						this.loading = false

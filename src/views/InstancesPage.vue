@@ -71,7 +71,7 @@
 					<br />
 					<br />
 					<div class="d-flex justify-content-center">
-						<button @click="popDelete(volume)" type="button" class="btn btn-danger btn-sm">
+						<button @click="popDelete(instance)" type="button" class="btn btn-danger btn-sm">
 							Delete
 						</button>
 					</div>
@@ -85,13 +85,15 @@
 		:token="currentToken"
 		:project="currentProjectName"
 	></add-instance>
+	<delete-confirm v-if="confirmDelete" @TogglePopup="TogglePopup"> </delete-confirm>
 </template>
 
 <script>
 	import AddInstance from "../components/AddInstance.vue"
+	import DeleteConfirm from "../components/DeleteConfirm.vue"
 
 	export default {
-		components: { AddInstance },
+		components: { AddInstance, DeleteConfirm },
 		name: "InstancePage",
 		data() {
 			return {
@@ -102,7 +104,7 @@
 				popForm: false,
 				confirmDelete: false,
 				currentToken: "",
-				volumeToDelete: {},
+				instanceToDelete: {},
 			}
 		},
 
@@ -173,46 +175,52 @@
 				this.popForm = status
 
 				if (type == "Confirm") {
-					this.getVolumes()
+					this.getInstances()
 					setTimeout(() => {
-						this.getVolumes()
+						this.getInstances()
 					}, 5000)
 				}
 
 				if (type == "Delete") {
-					this.deleteVolume()
+					this.deleteInstance()
 					setTimeout(() => {
-						this.getVolumes()
+						this.getInstances()
 					}, 5000)
 				}
 
-				if (type == "Cancel") this.volumeToDelete = {}
+				if (type == "Cancel") this.instanceToDelete = {}
 			},
 
-			popDelete(volume) {
-				this.volumeToDelete = volume
+			popDelete(instance) {
+				this.instanceToDelete = instance
 				this.confirmDelete = true
 			},
 
-			async deleteVolume() {
-				this.$toast.info("Deleting the volume...")
+			async deleteInstance() {
+				this.$toast.info("Deleting the instance...")
 
 				this.getCurrentToken()
 
 				await this.axios
-					.delete("http://" + this.openStack + "/volume/v3/volumes/" + this.volumeToDelete.id, {
-						headers: {
-							"x-auth-token": this.currentToken,
-						},
-					})
+					.delete(
+						"http://" +
+							this.projectsTokens[0].ipOpenStack +
+							"/compute/v2.1/servers/" +
+							this.instanceToDelete.id,
+						{
+							headers: {
+								"x-auth-token": this.currentToken,
+							},
+						}
+					)
 					.then(response => {
-						if (response) this.$toast.success("volume erased successfully!")
+						if (response) this.$toast.success("Instance erased successfully!")
 					})
 					.catch(error => {
 						if (!error.response) this.$toast.error("Unexpected error!")
 					})
 
-				this.getVolumes()
+				this.getInstances()
 			},
 		},
 		mounted() {
