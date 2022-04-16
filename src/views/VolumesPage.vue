@@ -55,7 +55,7 @@
 					<br />
 					<span class="fw-bold">Name: </span>{{ volume.name }}
 					<br />
-					<span class="fw-bold">Bootable: </span> <span v-if="volume.bootable"> Yes</span>
+					<span class="fw-bold">Bootable: </span> <span v-if="volume.bootable == 'true'"> Yes</span>
 					<span v-else>No</span>
 					<br />
 					<span class="fw-bold">Size: </span>{{ volume.size }} GB

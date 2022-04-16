@@ -26,12 +26,32 @@
 			rows="3"
 		></textarea>
 		<br />
-		<div v-if="!volumeInInstance" class="row">
-			<div class="col-sm-7">
+		<div class="row">
+			<div v-if="!volumeInInstance" class="col-sm-7">
 				<label class="form-label" for="imageInstance">Image</label>
 				<select v-model="imageInstance" name="imageInstance" id="imageInstance" class="form-select">
 					<option v-for="image in images" :key="image">{{ image.name }}</option>
 				</select>
+			</div>
+			<div v-else class="col-sm-7">
+				<label class="form-label" for="voumeInstance">Volumes</label>
+				<select
+					v-if="volumes.length != 0"
+					v-model="voumeInstance"
+					class="form-select"
+					name="voumeInstance"
+					id="voumeInstance"
+				>
+					<option v-for="volume in volumes" :key="volume">{{ volume.name }}</option>
+				</select>
+				<input
+					v-else
+					v-model="voumeInstance"
+					class="form-control"
+					type="text"
+					id="voumeInstance"
+					readonly
+				/>
 			</div>
 			<div class="col-sm-5">
 				<label class="form-label" for="flavorInstance">Flavor</label>
@@ -45,12 +65,12 @@
 				</select>
 			</div>
 		</div>
-		<div v-else>
-			<label class="form-label" for="voumeInstance">Volumes</label>
-			<select v-model="voumeInstance" class="form-select" name="voumeInstance" id="voumeInstance">
-				<option v-for="volume in volumes" :key="volume">{{ volume.name }}</option>
-			</select>
+		<br />
+		<div v-if="!volumeInInstance">
+			<label class="form-label" for="volumeName">Size (GiB)</label>
+			<input v-model="sizeVolume" class="form-control" type="number" id="volumeName" required />
 		</div>
+		<br />
 		<div class="form-check">
 			<input
 				v-model="volumeInInstance"
@@ -110,7 +130,8 @@
 				descInstance: "",
 				imageInstance: "--- Select Image ---",
 				flavorInstance: "--- Select Flavor ---",
-				voumeInstance: "--- Select Volume ---",
+				sizeVolume: 1,
+				voumeInstance: "No bootable volumes available!",
 				volumeInInstance: false,
 				networkInstance: [],
 				images: [],
@@ -166,8 +187,6 @@
 					}
 				}
 
-				console.log(allVolumes)
-
 				this.volumes = availableVolumes
 			},
 
@@ -199,12 +218,20 @@
 					this.$toast.error("Description of the instance is required!")
 					error = true
 				}
-				if (this.imageInstance == "--- Select Image ---") {
+				if (this.volumeInInstance && this.voumeInstance == "No bootable volumes available!") {
+					this.$toast.error("The bootable volume of the instance is required!")
+					error = true
+				}
+				if (!this.volumeInInstance && this.imageInstance == "--- Select Image ---") {
 					this.$toast.error("The image of the instance is required!")
 					error = true
 				}
 				if (this.flavorInstance == "--- Select Flavor ---") {
 					this.$toast.error("The flavor of the instance is required!")
+					error = true
+				}
+				if (this.sizeVolume <= 0) {
+					this.$toast.error("The size of the volume must be greater than 0!")
 					error = true
 				}
 
@@ -229,6 +256,12 @@
 				return idFlavor
 			},
 
+			getVolumeId() {
+				for (let i = 0; i < this.volumes.length; i++) {
+					if (this.voumeInstance == this.volumes[i].name) return this.volumes[i].id
+				}
+			},
+
 			getArrayNetworks() {
 				var arrayNetworks = []
 
@@ -250,37 +283,85 @@
 			sendData() {
 				this.loading = true
 
-				this.axios
-					.post(
-						"http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2.1/servers",
-						{
-							server: {
-								name: this.instanceName,
-								//description: this.descInstance,
-								imageRef: this.getImageId(),
-								flavorRef: this.getFlavorId(),
-								networks: this.getArrayNetworks(),
+				if (!this.volumeInInstance) {
+					this.axios
+						.post(
+							"http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2.1/servers",
+							{
+								server: {
+									name: this.instanceName,
+									//description: this.descInstance,
+									flavorRef: this.getFlavorId(),
+									networks: this.getArrayNetworks(),
+									block_device_mapping_v2: [
+										{
+											uuid: this.getImageId(),
+											source_type: "image",
+											destination_type: "volume",
+											boot_index: 0,
+											volume_size: this.sizeVolume,
+										},
+									],
+								},
 							},
-						},
-						{
-							headers: {
-								"X-Auth-Token": this.token,
-								"Content-Type": "application/json",
-							},
-						}
-					)
-					.then(response => {
-						if (response.status == 202) this.$toast.success("Instance created successfully!")
+							{
+								headers: {
+									"X-Auth-Token": this.token,
+									"Content-Type": "application/json",
+								},
+							}
+						)
+						.then(response => {
+							if (response.status == 202) this.$toast.success("Instance created successfully!")
 
-						this.$emit("TogglePopup", false, "Confirm")
-						this.loading = false
-					})
-					.catch(error => {
-						if (error.response) {
-							if (error.response.status == 413) this.$toast.error("Request Entity Too Large!")
-						}
-						this.loading = false
-					})
+							this.$emit("TogglePopup", false, "Confirm")
+							this.loading = false
+						})
+						.catch(error => {
+							if (error.response) {
+								if (error.response.status == 413) this.$toast.error("Request Entity Too Large!")
+							}
+							this.loading = false
+						})
+				} else {
+					this.axios
+						.post(
+							"http://" + this.$projectsTokens[0].ipOpenStack + "/compute/v2.1/servers",
+							{
+								server: {
+									name: this.instanceName,
+									flavorRef: this.getFlavorId(),
+									networks: this.getArrayNetworks(),
+									block_device_mapping_v2: [
+										{
+											uuid: this.getVolumeId(),
+											source_type: "volume",
+											destination_type: "volume",
+											boot_index: 0,
+										},
+									],
+								},
+							},
+							{
+								headers: {
+									"X-Auth-Token": this.token,
+									"Content-Type": "application/json",
+								},
+							}
+						)
+						.then(response => {
+							if (response.status == 202) this.$toast.success("Instance created successfully!")
+
+							this.$emit("TogglePopup", false, "Confirm")
+							this.loading = false
+						})
+						.catch(error => {
+							if (error.response) {
+								if (error.response.status == 413) this.$toast.error("Request Entity Too Large!")
+							}
+							this.loading = false
+						})
+				}
 			},
 
 			cancel() {

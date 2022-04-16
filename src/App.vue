@@ -14,7 +14,7 @@
 					placeholder="demo"
 					readonly
 				/>
-				<button class="btn btn-outline-success" type="submit">LogOut</button>
+				<button @click="logOut" class="btn btn-outline-success" type="submit">LogOut</button>
 			</form>
 		</div>
 	</nav>
@@ -168,6 +168,10 @@
 							if (error.response.status == 400) this.$toast.error("Internal server error!")
 						} else this.$toast.error("Error to obtaince the scoped token!")
 					})
+			},
+
+			logOut() {
+				this.$projectsTokens = []
 			},
 		},
 

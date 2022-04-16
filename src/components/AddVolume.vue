@@ -78,7 +78,7 @@
 					this.$toast.error("The image of the volume is required!")
 					error = true
 				}
-				if (this.sizeVolume == 0) {
+				if (this.sizeVolume <= 0) {
 					this.$toast.error("The size of the volume must be greater than 0!")
 					error = true
 				}
