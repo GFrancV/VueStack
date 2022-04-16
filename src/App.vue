@@ -3,7 +3,7 @@
 	<nav v-if="Object.keys(projects).length != 0" class="navbar navbar-dark bg-dark">
 		<div class="container-fluid">
 			<router-link class="navbar-brand" :to="{ name: '/' }"> VueStack </router-link>
-			<form class="d-flex">
+			<div class="d-flex">
 				<span class="navbar-text"> OpenStack: </span>
 				<input class="form-control me-2" v-model="credentials.openStack" type="text" readonly />
 				<span class="navbar-text"> User: </span>
@@ -15,12 +15,12 @@
 					readonly
 				/>
 				<button @click="logOut" class="btn btn-outline-success" type="submit">LogOut</button>
-			</form>
+			</div>
 		</div>
 	</nav>
 
 	<!-- SlideBar -->
-	<div v-if="Object.keys(projects).length != 0" class="row">
+	<div v-if="Object.keys(projects).length != 0" class="row fullVh">
 		<div class="col-sm-2 slidebar bg-dark navbar-dark">
 			<div class="container">
 				<h3 class="navbar-brand">Options</h3>
@@ -91,6 +91,7 @@
 			</div>
 		</div>
 	</div>
+
 	<div v-if="Object.keys(projects).length == 0" class="container">
 		<sign-in @getToken="getToken" @getProjects="getProjects"></sign-in>
 	</div>
@@ -182,7 +183,8 @@
 			},
 
 			logOut() {
-				this.$projectsTokens = []
+				this.credentials = {}
+				this.projects = {}
 			},
 		},
 

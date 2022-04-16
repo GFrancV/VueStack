@@ -19,7 +19,7 @@
 					</select>
 				</div>
 				<div class="col-sm-4 align-self-end">
-					<button type="button" class="btn btn-success px-5" @click="selectProject">Select</button>
+					<button type="button" class="btn btn-success px-3" @click="selectProject">Select</button>
 				</div>
 			</div>
 		</div>
