@@ -2,7 +2,7 @@
 	<!-- Navbar -->
 	<nav v-if="Object.keys(projects).length != 0" class="navbar navbar-dark bg-dark">
 		<div class="container-fluid">
-			<a class="navbar-brand">Navbar</a>
+			<router-link class="navbar-brand" :to="{ name: '/' }"> VueStack </router-link>
 			<form class="d-flex">
 				<span class="navbar-text"> OpenStack: </span>
 				<input class="form-control me-2" v-model="credentials.openStack" type="text" readonly />
@@ -29,6 +29,15 @@
 					<li class="nav-item active">
 						<router-link
 							class="nav-link"
+							:class="{ active: $route.name === 'dashboard' }"
+							:to="{ name: '/' }"
+						>
+							Dashboard
+						</router-link>
+					</li>
+					<li class="nav-item active">
+						<router-link
+							class="nav-link"
 							:class="{ active: $route.name === 'Instances' }"
 							:to="{ name: 'Instances' }"
 						>
@@ -41,9 +50,6 @@
 							:class="{ active: $route.name === 'Volumes' }"
 							:to="{
 								name: 'Volumes',
-								params: {
-									openStack: credentials.openStack,
-								},
 							}"
 						>
 							Volumes
@@ -79,7 +85,7 @@
 		</div>
 
 		<!-- Dashboard -->
-		<div class="col-sm-10 content bg-light">
+		<div v-if="!loading" class="col-sm-10 content bg-light">
 			<div class="container">
 				<router-view />
 			</div>
@@ -100,6 +106,7 @@
 			return {
 				credentials: {},
 				projects: {},
+				loading: true,
 			}
 		},
 
@@ -111,6 +118,8 @@
 			},
 
 			getProjects(projects) {
+				this.loading = true
+
 				//Get all the projects
 				this.projects = projects
 
@@ -124,6 +133,8 @@
 					projectsNames.push(projects[i].name)
 				}
 				this.$projectsTokens.push(projectsNames)
+
+				this.loading = false
 			},
 
 			async getScopedToken(idProject, nameProject) {

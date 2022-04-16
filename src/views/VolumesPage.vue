@@ -104,12 +104,6 @@
 	export default {
 		components: { AddVolume, DeleteConfirm },
 		name: "VolumesPage",
-		props: {
-			openStack: {
-				type: String,
-				required: true,
-			},
-		},
 
 		data() {
 			return {
@@ -167,7 +161,7 @@
 				this.getCurrentToken()
 
 				await this.axios
-					.get("http://" + this.openStack + "/volume/v3/volumes/detail", {
+					.get("http://" + this.projectsTokens[0].ipOpenStack + "/volume/v3/volumes/detail", {
 						headers: {
 							"x-auth-token": this.currentToken,
 						},
@@ -218,11 +212,17 @@
 				this.getCurrentToken()
 
 				await this.axios
-					.delete("http://" + this.openStack + "/volume/v3/volumes/" + this.volumeToDelete.id, {
-						headers: {
-							"x-auth-token": this.currentToken,
-						},
-					})
+					.delete(
+						"http://" +
+							this.projectsTokens[0].ipOpenStack +
+							"/volume/v3/volumes/" +
+							this.volumeToDelete.id,
+						{
+							headers: {
+								"x-auth-token": this.currentToken,
+							},
+						}
+					)
 					.then(response => {
 						if (response) this.$toast.success("volume erased successfully!")
 					})

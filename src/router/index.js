@@ -31,7 +31,6 @@ const routes = [
 		path: "/volumes",
 		name: "Volumes",
 		component: Volumes,
-		props: true,
 	},
 	{
 		path: "/images",
