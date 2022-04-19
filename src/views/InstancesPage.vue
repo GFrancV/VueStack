@@ -56,21 +56,33 @@
 					<br />
 					<span class="fw-bold">Created at: </span>{{ getDate(instance.created) }}
 					<br />
-					<span class="fw-bold">Addresses: </span>
-					<span v-if="instance.length == 0">{{ instance.addresses }}</span>
-					<span v-else>----</span>
-					<br />
 					<span class="fw-bold">Status: </span>
 					<span v-if="instance.status == 'ACTIVE'" class="label label-success"> Active</span>
 					<span v-else-if="instance.status == 'in-use'" class="label label-info">{{
 						instance.status
 					}}</span>
 					<span v-else-if="instance.status == 'BUILD'" class="label label-warning">Building</span>
+					<span v-else-if="instance.status == 'SHUTOFF'" class="label label-info">ShutOff</span>
 					<span v-else class="label label-danger"> {{ instance.status }} </span>
-
 					<br />
 					<br />
-					<div class="d-flex justify-content-center">
+					<div class="d-grid gap-2 d-flex justify-content-center">
+						<button
+							v-if="instance.status == 'SHUTOFF'"
+							@click="startInstance(instance.id)"
+							type="button"
+							class="btn btn-success btn-sm"
+						>
+							► Start instance
+						</button>
+						<button
+							v-if="instance.status == 'ACTIVE'"
+							@click="stopInstance(instance.id)"
+							type="button"
+							class="btn btn-primary btn-sm"
+						>
+							■ Stop instance
+						</button>
 						<button @click="popDelete(instance)" type="button" class="btn btn-danger btn-sm">
 							Delete
 						</button>
@@ -189,6 +201,66 @@
 				}
 
 				if (type == "Cancel") this.instanceToDelete = {}
+			},
+
+			async startInstance(currentServer) {
+				await this.axios
+					.post(
+						"http://" +
+							this.projectsTokens[0].ipOpenStack +
+							"/compute/v2.1/servers/" +
+							currentServer +
+							"/action",
+						{
+							"os-start": null,
+						},
+						{
+							headers: {
+								"x-auth-token": this.currentToken,
+								"Content-Type": "application/json",
+							},
+						}
+					)
+					.then(response => {
+						if (response.status == 202) this.$toast.success("Instance started successfully!")
+						setTimeout(() => {
+							this.getInstances()
+						}, 8000)
+					})
+					.catch(error => {
+						console.log(error)
+						this.$toast.error("Unexpected error!")
+					})
+			},
+
+			async stopInstance(currentServer) {
+				await this.axios
+					.post(
+						"http://" +
+							this.projectsTokens[0].ipOpenStack +
+							"/compute/v2.1/servers/" +
+							currentServer +
+							"/action",
+						{
+							"os-stop": null,
+						},
+						{
+							headers: {
+								"x-auth-token": this.currentToken,
+								"Content-Type": "application/json",
+							},
+						}
+					)
+					.then(response => {
+						if (response.status == 202) this.$toast.success("Instance stopped successfully!")
+						setTimeout(() => {
+							this.getInstances()
+						}, 5000)
+					})
+					.catch(error => {
+						console.log(error)
+						this.$toast.error("Unexpected error!")
+					})
 			},
 
 			popDelete(instance) {

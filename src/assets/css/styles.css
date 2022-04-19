@@ -7,11 +7,11 @@
 }
 
 .fullVh {
-	height: 100vh;
 }
 
 .slidebar {
 	padding-top: 20px;
+	height: 100vh;
 }
 
 .content {

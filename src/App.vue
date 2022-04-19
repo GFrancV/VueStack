@@ -20,7 +20,7 @@
 	</nav>
 
 	<!-- SlideBar -->
-	<div v-if="Object.keys(projects).length != 0" class="row fullVh">
+	<div v-if="Object.keys(projects).length != 0" class="row">
 		<div class="col-sm-2 slidebar bg-dark navbar-dark">
 			<div class="container">
 				<h3 class="navbar-brand">Options</h3>
