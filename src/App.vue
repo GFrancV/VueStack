@@ -66,20 +66,6 @@
 							Images
 						</router-link>
 					</li>
-					<li class="nav-item active">
-						<router-link
-							class="nav-link"
-							:class="{ active: $route.name === 'Network' }"
-							:to="{
-								name: 'Network',
-							}"
-						>
-							Netwok
-						</router-link>
-					</li>
-					<li class="nav-item active">
-						<a class="nav-link" href="#">Containers <span class="sr-only">(current)</span></a>
-					</li>
 				</ul>
 			</div>
 		</div>

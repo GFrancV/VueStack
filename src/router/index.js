@@ -4,7 +4,6 @@ import SignIn from "../views/SignIn.vue"
 import Instances from "../views/InstancesPage.vue"
 import Volumes from "../views/VolumesPage.vue"
 import Images from "../views/ImagesPage.vue"
-import Network from "../views/NetworkPage.vue"
 
 const routes = [
 	{
@@ -36,11 +35,6 @@ const routes = [
 		path: "/images",
 		name: "Images",
 		component: Images,
-	},
-	{
-		path: "/network",
-		name: "Network",
-		component: Network,
 	},
 ]
 

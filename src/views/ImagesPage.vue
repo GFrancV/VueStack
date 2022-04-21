@@ -47,9 +47,7 @@
 					<br />
 					<span class="fw-bold">Status: </span>
 					<span v-if="image.status == 'ACTIVE'" class="label label-success"> Active</span>
-					<span v-else-if="image.status == 'in-use'" class="label label-info">{{
-						image.status
-					}}</span>
+					<span v-else-if="image.status == 'SAVING'" class="label label-info">Saving</span>
 					<span v-else-if="image.status == 'creating'" class="label label-warning">{{
 						image.status
 					}}</span>
@@ -67,13 +65,15 @@
 		<div v-else class="d-flex justify-content-center"><h3>Loading...</h3></div>
 	</div>
 	<add-image v-if="popForm" @TogglePopup="TogglePopup" :token="currentToken"></add-image>
+	<delete-confirm v-if="confirmDelete" @TogglePopup="TogglePopup"> </delete-confirm>
 </template>
 
 <script>
 	import AddImage from "../components/AddImage.vue"
+	import DeleteConfirm from "../components/DeleteConfirm.vue"
 
 	export default {
-		components: { AddImage },
+		components: { AddImage, DeleteConfirm },
 		name: "ImagesPage",
 		data() {
 			return {
@@ -111,6 +111,7 @@
 
 			async getImages() {
 				this.loading = true
+				this.images.splice(0, this.images.length)
 				var images = {}
 
 				this.getCurrentToken()
@@ -167,6 +168,38 @@
 				return formatData
 			},
 
+			popDelete(image) {
+				this.imageToDelete = image
+				this.confirmDelete = true
+			},
+
+			async deleteImage() {
+				this.$toast.info("Deleting the image...")
+
+				this.getCurrentToken()
+
+				await this.axios
+					.delete(
+						"http://" +
+							this.projectsTokens[0].ipOpenStack +
+							"/image/v2/images/" +
+							this.imageToDelete.id,
+						{
+							headers: {
+								"x-auth-token": this.currentToken,
+							},
+						}
+					)
+					.then(response => {
+						if (response) this.$toast.success("volume erased successfully!")
+					})
+					.catch(error => {
+						if (!error.response) this.$toast.error("Unexpected error!")
+					})
+
+				this.getImages()
+			},
+
 			showPopForm() {
 				this.popForm = true
 			},
@@ -183,9 +216,9 @@
 				}
 
 				if (type == "Delete") {
-					this.deleteVolume()
+					this.deleteImage()
 					setTimeout(() => {
-						this.getVolumes()
+						this.getImages()
 					}, 5000)
 				}
 
