@@ -2,7 +2,10 @@
 	<!-- Navbar -->
 	<nav v-if="Object.keys(projects).length != 0" class="navbar navbar-dark bg-dark">
 		<div class="container-fluid">
-			<router-link class="navbar-brand" :to="{ name: '/' }"> VueStack </router-link>
+			<router-link class="navbar-brand" :to="{ name: '/' }">
+				<img src="./assets/logo.png" width="40" height="40" alt="logo" />
+				VueStack
+			</router-link>
 			<div class="d-flex">
 				<span class="navbar-text"> OpenStack: </span>
 				<input class="form-control me-2" v-model="credentials.openStack" type="text" readonly />
